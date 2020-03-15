@@ -10,7 +10,7 @@ class InventorySystem:
         self.sd_demand = sd_daily_demand
         self.daily_invcost = daily_Invcosts  # per unit per day
         self.daily_stockoutcost = daily_stockoutcosts  # per unit per day
-        self.EOQ = math.sqrt((2 * self.mean_demand * reorderCosts) / daily_Invcosts)
+        self.EOQ = round(math.sqrt((2 * self.mean_demand * reorderCosts) / daily_Invcosts))
         self.InventoryLevel = mean_daily_demand * 5  # we set the start inventory to 5 times the mean daily demand
 
     def init_state(self):
@@ -35,6 +35,8 @@ class InventorySystem:
         if self.InventoryLevel >= 0:  # if inventory level is positive we have inventory costs
             costs = self.InventoryLevel * self.daily_invcost
         else:  # else we have stockout costs
-            costs = self.InventoryLevel * self.daily_stockoutcost
+            costs = -self.InventoryLevel * self.daily_stockoutcost
 
         return costs
+
+
