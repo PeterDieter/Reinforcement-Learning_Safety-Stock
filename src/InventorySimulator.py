@@ -15,21 +15,22 @@ class InventorySystem:
 
     def init_state(self):
         # The state is just the inventory level
-        return self.inventoryLevel
+        self.inventoryLevel = self.mean_demand * 5
+        return np.array([self.inventoryLevel])
 
     def new_state(self, action):
         # demand is normal distributed
-        demand_dist = stats.truncnorm((0 - self.mean_demand) / self.sd_demand,
-                                      (100 * self.sd_demand) / self.sd_demand,
+        demand_dist = stats.truncnorm((0 - self.mean_demand) / (self.sd_demand + 0.0001),
+                                      (100 * self.sd_demand) / (self.sd_demand + 0.0001),
                                       loc=self.mean_demand, scale=self.sd_demand)
         curr_demand = demand_dist.rvs().round().astype(int)
         self.inventoryLevel = self.inventoryLevel - curr_demand
 
-        # if we order (action == 1) then the new inventory level is the old one plus the EOQ
-        if action == 1:
+        # if we order (action == order) then the new inventory level is the old one plus the EOQ
+        if action == "order":
             self.inventoryLevel = self.inventoryLevel + self.eoq
 
-        return self.inventoryLevel
+        return np.array([self.inventoryLevel])
 
     def costs(self):
 
