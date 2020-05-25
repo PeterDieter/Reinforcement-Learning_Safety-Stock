@@ -3,13 +3,14 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import random
-from matplotlib import pylab as plt
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 
 def deepQ_inventorysystem(system, epochs, time_per_epoch):
     inputl = 1
-    hiddenl1 = 2
-    hiddenl2 = 2
+    hiddenl1 = 5
+    hiddenl2 = 5
     outputl = 2
 
     model = torch.nn.Sequential(
@@ -20,21 +21,22 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
         torch.nn.Linear(hiddenl2, outputl))  # hidden layer 2 to output layer
 
     loss_fn = torch.nn.MSELoss(reduction='mean')
-    learning_rate = 1e-6
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    gamma = 0.95
-    epsilon = 0.4
+    learning_rate = 1e-4
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.5)
+    gamma = 0.999
+    epsilon = 0.8
 
     # Training
     losses = []  # A
-    batchSize = 4
-    buffer = 10
+    batchSize = 20
+    buffer = 200
     replay = []
     costlist = []
     order_level = []
     action_set = {
         0: 'not_order',
         1: 'order'}
+
 
     for i in range(epochs):  # B
         state_ = system.init_state()  # D
@@ -43,6 +45,7 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
         status = 1  # F
         totalcost = 0
         mov = 0
+        new_states = []
         while status == 1:  # G
             mov += 1
             # state = state.to(device)
@@ -57,8 +60,6 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
 
             action = action_set[action_]  # J
 
-
-
             new_state_ = system.new_state(action)  # K
             new_state = Variable(torch.from_numpy(new_state_).float())  # L
             cost = system.costs()
@@ -67,6 +68,19 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
 
             if action_ == 1:
                 order_level.append(state)
+
+            # Plotting
+            if len(new_states) < 10:
+                new_states.append(state)
+            else:
+                new_states.pop(0)
+                new_states.append(state)
+                plt.clf()
+                plt.plot(new_states)
+                plt.ylim((-100,1000))
+                plt.pause(0.01)
+
+
 
             if len(replay) < buffer:
                 replay.append((state, action_, cost, new_state))
@@ -77,6 +91,7 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
                 output = Variable(torch.empty(batchSize, 2, dtype=torch.float))
                 target = Variable(torch.empty(batchSize, 2, dtype=torch.float))
                 h = 0
+
                 for memory in minibatch:
                     old_state, action_m, cost_m, new_state_m = memory
                     old_qval = model(old_state)
@@ -101,6 +116,8 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
                 losses.append(loss.data)
                 optimizer.step()
 
+
+
             state = new_state
 
             if mov > time_per_epoch:
@@ -109,7 +126,9 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
                 costlist.append(totalcost)
                 print('epoch ', i)
 
-            if epsilon > 0.001:
-                epsilon -= (1 / epochs)
+                if epsilon > 0.001:
+                    epsilon -= (1 / epochs)
+
+
 
     return costlist, losses, order_level

@@ -13,7 +13,7 @@ daily_stockoutcost = 4  # per unit per day
 reorder_costs = 2
 system = InventorySystem(mean_daily_demand, sd_demand, daily_invcost, daily_stockoutcost, reorder_costs)
 
-costs, losses, order_level = deepQ_inventorysystem(system=system, epochs=500, time_per_epoch=40)
+costs, losses, order_level = deepQ_inventorysystem(system=system, epochs=200, time_per_epoch=40)
 plt.plot(order_level)
 plt.show()
 print(order_level)

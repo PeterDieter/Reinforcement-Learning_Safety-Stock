@@ -15,7 +15,7 @@ class InventorySystem:
 
     def init_state(self):
         # The state is just the inventory level
-        self.inventoryLevel = self.mean_demand * 5
+        self.inventoryLevel = self.mean_demand * 3
         return np.array([self.inventoryLevel])
 
     def new_state(self, action):
