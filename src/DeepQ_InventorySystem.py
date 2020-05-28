@@ -4,13 +4,14 @@ import torch
 from torch.autograd import Variable
 import random
 import matplotlib.pyplot as plt
+import copy
 import matplotlib.animation as animation
 
 
 def deepQ_inventorysystem(system, epochs, time_per_epoch):
     inputl = 1
-    hiddenl1 = 5
-    hiddenl2 = 5
+    hiddenl1 = 2
+    hiddenl2 = 2
     outputl = 2
 
     model = torch.nn.Sequential(
@@ -20,8 +21,13 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
         torch.nn.LeakyReLU(),
         torch.nn.Linear(hiddenl2, outputl))  # hidden layer 2 to output layer
 
+    model_ = copy.deepcopy(model)
+
+    loss_fn = torch.nn.MSELoss(size_average=False)
+
+
     loss_fn = torch.nn.MSELoss(reduction='mean')
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.5)
     gamma = 0.999
     epsilon = 0.8
@@ -36,6 +42,8 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
     action_set = {
         0: 'not_order',
         1: 'order'}
+    c = 300  # target network update step size
+    c_step = 0
 
 
     for i in range(epochs):  # B
@@ -47,6 +55,13 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
         mov = 0
         new_states = []
         while status == 1:  # G
+
+            c_step += 1
+            if c_step > c:
+                model_.load_state_dict(model.state_dict())
+                c_step = 0
+            mov += 1
+
             mov += 1
             # state = state.to(device)
             qval = model(state)  # H
@@ -96,8 +111,8 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
                     old_state, action_m, cost_m, new_state_m = memory
                     old_qval = model(old_state)
                     # new_state_m = new_state_m.to(device)
-                    newQ = model(new_state_m).data.numpy()
-                    minQ = np.min(newQ)
+                    newQ = model_(new_state_m)
+                    minQ = torch.min(newQ)
                     y = torch.zeros((1, 2))
                     y[:] = old_qval[:]
 
