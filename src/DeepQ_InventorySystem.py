@@ -16,9 +16,9 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
 
     model = torch.nn.Sequential(
         torch.nn.Linear(inputl, hiddenl1),  # input layer to hidden layer 1
-        torch.nn.LeakyReLU(),
+        torch.nn.Sigmoid(),
         torch.nn.Linear(hiddenl1, hiddenl2),  # hidden layer 1 to hidden layer 2
-        torch.nn.LeakyReLU(),
+        torch.nn.Sigmoid(),
         torch.nn.Linear(hiddenl2, outputl))  # hidden layer 2 to output layer
 
     model_ = copy.deepcopy(model)
@@ -27,10 +27,10 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
 
 
     loss_fn = torch.nn.MSELoss(reduction='mean')
-    learning_rate = 1e-3
+    learning_rate = 1e-4
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.5)
     gamma = 0.999
-    epsilon = 0.8
+    epsilon = 0.7
 
     # Training
     losses = []  # A
@@ -42,7 +42,7 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
     action_set = {
         0: 'not_order',
         1: 'order'}
-    c = 300  # target network update step size
+    c = 50  # target network update step size
     c_step = 0
 
 
@@ -143,6 +143,7 @@ def deepQ_inventorysystem(system, epochs, time_per_epoch):
 
                 if epsilon > 0.001:
                     epsilon -= (1 / epochs)
+                    print(epsilon)
 
 
 
